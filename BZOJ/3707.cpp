@@ -13,21 +13,23 @@ template<typename T>inline void read(T&x)
 	x *= sign;
 }
 const int N = 1e3 + 50;
-int n;
-struct DATA
+int n,cnt;
+struct Point
 {
 	int x,y;
-	double k;
-	DATA(){}
-	#define eps 1e-9
-	DATA(int _x,int _y) { x = _x,y = _y; k = y/(double)x; }
+	Point(){}
+	Point(int _x,int _y) { x = _x,y = _y; }
 
-	inline bool operator < (const DATA a) const { return k < a.k; }
-}b[N];
-vector<DATA>a[N];
+	inline bool operator < (const Point a) const { return x < a.x; }
+	inline Point operator - (const Point a) const { return Point(x-a.x,y-a.y); }
+}p[N];
+struct Line { int x,y; double k; }L[N * N];
 ll ans = 4e18;
 
-inline ll cross(DATA a,DATA b) { return 1ll * a.x * b.y - 1ll * a.y * b.x; }
+const bool cmp(Line a,Line b) { return a.k < b.k; }
+inline ll cross(Point a,Point b) { return 1ll * a.x * b.y - 1ll * a.y * b.x; }
+
+int pos[N],rk[N];
 
 int main()
 {
@@ -35,21 +37,26 @@ int main()
 	freopen("1.in","r",stdin);
 #endif
 	read(n);
-	rep(i,1,n) read(b[i].x), read(b[i].y);
+	rep(i,1,n) read(p[i].x), read(p[i].y);
+	sort(p + 1,p + 1 + n);
 	rep(i,1,n) rep(j,i + 1,n)
 	{
-		a[i].push_back(DATA(b[j].x - b[i].x,b[j].y - b[i].y));
-		a[j].push_back(DATA(b[i].x - b[j].x,b[i].y - b[j].y));
+		L[ ++ cnt].x = i;
+		L[ cnt].y = j;	
+		#define eps 1e-10
+		L[ cnt].k = (p[j].y - p[i].y)/(double)(p[j].x - p[i].x + eps);
 	}
-	rep(i,1,n) sort(a[i].begin(),a[i].end());
-	rep(i,1,n)
+	sort(L + 1,L + 1 + cnt,cmp);
+	rep(i,1,n) pos[i] = rk[i] = i;
+	rep(i,1,cnt)
 	{
-		int sz = a[i].size(); -- sz;
-		if(sz == 0) continue;
-		chkmin(ans,abs(cross(a[i][0],a[i][sz])));	
-		rep(j,0,sz-1)
-			chkmin(ans,abs(cross(a[i][j],a[i][j+1])));	
+		int x = L[i].x,y = L[i].y;	
+		if(rk[x] > rk[y]) swap(x,y);
+		if(rk[x] > 1) chkmin(ans,abs(cross(p[y]-p[x],p[pos[rk[x]-1]]-p[x])));
+		if(rk[y] < n) chkmin(ans,abs(cross(p[y]-p[x],p[pos[rk[y]+1]]-p[x])));
+		swap(rk[x],rk[y]);
+		swap(pos[rk[x]],pos[rk[y]]);
 	}
-	cout << fixed << setprecision(2) << 0.5 * ans << endl;
+	printf("%.2lf\n",ans * 0.5);
 	return 0;
 }
